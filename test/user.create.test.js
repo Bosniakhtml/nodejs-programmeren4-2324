@@ -1,3 +1,5 @@
+// niet volledig uitgewerkt!
+
 const chai = require('chai')
 const chaiHttp = require('chai-http')
 const server = require('../index')
@@ -50,22 +52,69 @@ describe('UC201 Registreren als nieuwe user', () => {
             })
     })
 
-    it.skip('TC-201-2 Niet-valide email adres', (done) => {
-        done()
+    it('TC-201-2 Niet-valide email adres', (done) => {
+        chai.request(server)
+            .post(endpointToTest)
+            .send({
+                firstName: 'Voornaam',
+                lastName: 'Achternaam',
+                emailAdress: 'ongeldig-email-adres' // Dit moet een ongeldig e-mailadres zijn
+            })
+            .end((err, res) => {
+                chai.expect(res).to.have.status(400)
+                chai.expect(res.body).to.be.a('object')
+                chai.expect(res.body).to.have.property('status').equals(400)
+                chai.expect(res.body)
+                    .to.have.property('message')
+                    .equals('Missing or incorrect email')
+                done()
+            })
     })
 
-    it.skip('TC-201-3 Niet-valide password', (done) => {
-        //
-        // Hier schrijf je jouw testcase.
-        //
-        done()
-    })
+    // it.skip('TC-201-3 Niet-valide password', (done) => {
+    //
+    // Hier schrijf je jouw testcase.
+    //
+    //     done()
+    // })
 
-    it.skip('TC-201-4 Gebruiker bestaat al', (done) => {
-        //
-        // Hier schrijf je jouw testcase.
-        //
-        done()
+    it('TC-201-4 Gebruiker bestaat al', (done) => {
+        // Simuleer het toevoegen van een gebruiker met hetzelfde e-mailadres aan de database
+        database.add(
+            {
+                firstName: 'Bestaande',
+                lastName: 'Gebruiker',
+                emailAdress: 'bestaande@server.nl',
+                isActive: true
+            },
+            (err, newUser) => {
+                chai.expect(err).to.be.null
+                chai.expect(newUser).to.be.a('object')
+
+                // Voer de registratiepoging uit voor een gebruiker met hetzelfde e-mailadres
+                chai.request(server)
+                    .post(endpointToTest)
+                    .send({
+                        firstName: 'Nieuwe',
+                        lastName: 'Gebruiker',
+                        emailAdress: 'bestaande@server.nl',
+                        isActive: true
+                    })
+                    .end((err, res) => {
+                        chai.expect(res).to.have.status(400)
+                        chai.expect(res.body).to.be.a('object')
+                        chai.expect(res.body)
+                            .to.have.property('status')
+                            .equals(400)
+                        chai.expect(res.body)
+                            .to.have.property('message')
+                            .equals(
+                                'User with this email address already exists'
+                            )
+                        done()
+                    })
+            }
+        )
     })
 
     it('TC-201-5 Gebruiker succesvol geregistreerd', (done) => {
@@ -74,7 +123,8 @@ describe('UC201 Registreren als nieuwe user', () => {
             .send({
                 firstName: 'Voornaam',
                 lastName: 'Achternaam',
-                emailAdress: 'v.a@server.nl'
+                emailAdress: 'v.a@server.nl',
+                isActive: true
             })
             .end((err, res) => {
                 res.should.have.status(200)
@@ -87,6 +137,7 @@ describe('UC201 Registreren als nieuwe user', () => {
                 data.should.have.property('firstName').equals('Voornaam')
                 data.should.have.property('lastName').equals('Achternaam')
                 data.should.have.property('emailAdress')
+                data.should.have.property('isActive')
                 data.should.have.property('id').that.is.a('number')
 
                 done()

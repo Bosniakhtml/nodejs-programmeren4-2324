@@ -1,3 +1,4 @@
+// index.js
 const express = require('express')
 const userRoutes = require('./src/routes/user.routes')
 const logger = require('./src/util/logger')
