@@ -2,7 +2,7 @@
 const express = require('express')
 const userRoutes = require('./src/routes/user.routes')
 const logger = require('./src/util/logger')
-
+// require('dotenv').config()
 const app = express()
 
 // express.json zorgt dat we de body van een request kunnen lezen

@@ -44,7 +44,10 @@ const database = {
         // Simuleer een asynchrone operatie
         setTimeout(() => {
             if (id < 0 || id >= this._data.length) {
-                callback({ message: `Error: id ${id} does not exist!` }, null)
+                callback(
+                    { status: 404, message: `Error: id ${id} does not exist!` },
+                    null
+                )
             } else {
                 callback(null, this._data[id])
             }
