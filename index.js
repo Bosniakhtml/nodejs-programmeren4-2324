@@ -1,8 +1,9 @@
 // index.js
 const express = require('express')
 const userRoutes = require('./src/routes/user.routes')
+const authRoutes = require('./src/routes/auth.routes').routes
 const logger = require('./src/util/logger')
-// require('dotenv').config()
+require('dotenv').config()
 const app = express()
 
 // express.json zorgt dat we de body van een request kunnen lezen
@@ -22,7 +23,11 @@ app.get('/api/info', (req, res) => {
 })
 
 // Hier komen alle routes
+console.log('Type of userRoutes:', typeof userRoutes) // Should log 'function'
+console.log('Type of authRoutes:', typeof authRoutes) // Should log 'function'
+
 app.use(userRoutes)
+app.use('/api/auth', authRoutes)
 
 // Route error handler
 app.use((req, res, next) => {

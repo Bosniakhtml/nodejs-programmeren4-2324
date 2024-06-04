@@ -8,6 +8,7 @@ const router = express.Router()
 const userController = require('../controllers/user.controller')
 const userService = require('../services/user.service')
 const logger = require('../util/logger')
+const authController = require('../services/auth.service')
 
 // Tijdelijke functie om niet bestaande routes op te vangen
 const notFound = (req, res, next) => {
@@ -99,10 +100,10 @@ const validateUserCreateChaiExpect = (req, res, next) => {
             /^[a-zA-Z]+$/,
             'lastName must be a string'
         )
-        assert(req.body.emailAddress, 'Missing or incorrect email')
-        chai.expect(req.body.emailAddress).to.not.be.empty
-        chai.expect(req.body.emailAddress).to.be.a('string')
-        chai.expect(req.body.emailAddress).to.match(/@/)
+        assert(req.body.emailAdress, 'Missing or incorrect email')
+        chai.expect(req.body.emailAdress).to.not.be.empty
+        chai.expect(req.body.emailAdress).to.be.a('string')
+        chai.expect(req.body.emailAdress).to.match(/@/)
 
         assert(req.body.hasOwnProperty('isActive'), 'Missing isActive property')
         assert(
@@ -129,10 +130,10 @@ router.post(
     validateUserCreateChaiExpect,
     userController.create
 )
-router.get(
-    '/api/user?field1=:value1&field2=:value2',
-    userController.searchUsers
-)
+// router.get(
+//    '/api/user?field1=:value1&field2=:value2',
+//    userController.searchUsers
+// )
 
 router.get('/api/user', userController.getAll)
 router.get('/api/user/:userId', userController.getById)

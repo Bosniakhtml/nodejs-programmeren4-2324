@@ -25,6 +25,19 @@ let userController = {
     },
 
     getAll: (req, res, next) => {
+        /*   const { firstName, isActive } = req.query
+        console.log(queryparams)
+
+        let queryString = 'SELECT `id`, `firstName` FROM `user`'
+        if (firstName || isActive) {
+            queryString += ' WERE '
+            if (firstName) {
+                queryString += `firstName='${firstName}'`
+            }
+        }
+        queryString += ';'
+        console.log(queryString)
+        */
         logger.trace('getAll')
         userService.getAll((error, success) => {
             if (error) {
@@ -140,6 +153,26 @@ let userController = {
             if (success) {
                 res.status(200).json({
                     status: success.status,
+                    message: success.message,
+                    data: success.data
+                })
+            }
+        })
+    },
+    getProfile: (req, res, next) => {
+        const userId = req.userId
+        logger.trace('getProfile for userId', userId)
+        userService.getProfile(userId, (error, success) => {
+            if (error) {
+                return next({
+                    status: error.status,
+                    message: error.message,
+                    data: {}
+                })
+            }
+            if (success) {
+                res.status(200).json({
+                    status: 200,
                     message: success.message,
                     data: success.data
                 })
