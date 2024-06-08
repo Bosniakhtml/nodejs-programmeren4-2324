@@ -93,15 +93,19 @@ describe('Example MySql testcase', () => {
                     const data = res.body.data
 
                     data.should.be.an('array').that.has.lengthOf(1)
-                    data[0].should.be.an('object').that.has.all.keys(
-                        'id',
-                        'firstName',
-                        'lastName'
-                        // 'emailAdress',
-                        // 'password',
-                        // 'street',
-                        // 'city'
-                    )
+                    data[0].should.be
+                        .an('object')
+                        .that.has.all.keys(
+                            'id',
+                            'firstName',
+                            'lastName',
+                            'emailAdress',
+                            'isActive',
+                            'password',
+                            'phoneNumber',
+                            'street',
+                            'city'
+                        )
                     data[0].id.should.be.a('number').that.equals(1)
                     // Enzovoort!
                     done()
@@ -126,15 +130,19 @@ describe('Example MySql testcase', () => {
                     const data = res.body.data
 
                     data.should.be.an('array').that.has.lengthOf(1)
-                    data[0].should.be.an('object').that.has.all.keys(
-                        'id',
-                        'firstName',
-                        'lastName'
-                        // 'emailAdress',
-                        // 'password',
-                        // 'street',
-                        // 'city'
-                    )
+                    data[0].should.be
+                        .an('object')
+                        .that.has.all.keys(
+                            'id',
+                            'firstName',
+                            'lastName',
+                            'emailAdress',
+                            'isActive',
+                            'password',
+                            'phoneNumber',
+                            'street',
+                            'city'
+                        )
                     data[0].id.should.be.a('number').that.equals(1)
                     // Enzovoort!
                     done()

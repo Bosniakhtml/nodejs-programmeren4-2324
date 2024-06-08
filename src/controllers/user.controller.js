@@ -14,8 +14,8 @@ let userController = {
                 })
             }
             if (success) {
-                res.status(200).json({
-                    status: 200,
+                res.status(201).json({
+                    status: 201,
                     message: 'User created successfully',
                     data: success
                 })

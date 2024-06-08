@@ -18,98 +18,86 @@ const notFound = (req, res, next) => {
         data: {}
     })
 }
-// Validation function to check if email address is unique
-const validateUniqueEmail = (req, res, next) => {
-    const email = req.body.emailAdress
-    userService.getByEmail(email, (err, existingUser) => {
-        if (err) {
-            logger.error(
-                'Error checking for existing user:',
-                err.message || 'unknown error'
-            )
-            return next(err)
-        }
-
-        if (existingUser) {
-            return next({
-                status: 400,
-                message: 'Email address already exists'
-            })
-        }
-
-        next()
-    })
-}
-// Input validation functions for user routes
-const validateUserCreate = (req, res, next) => {
-    if (!req.body.emailAdress || !req.body.firstName || !req.body.lastName) {
-        next({
-            status: 400,
-            message: 'Missing email or password',
-            data: {}
-        })
-    }
-    next()
-}
-
-// Input validation function 2 met gebruik van assert
-const validateUserCreateAssert = (req, res, next) => {
-    try {
-        assert(req.body.emailAdress, 'Missing email')
-        assert(req.body.firstName, 'Missing or incorrect first name')
-        assert(req.body.lastName, 'Missing last name')
-        next()
-    } catch (ex) {
-        next({
-            status: 400,
-            message: ex.message,
-            data: {}
-        })
-    }
-}
-
-// Input validation function 2 met gebruik van assert
-const validateUserCreateChaiShould = (req, res, next) => {
-    try {
-        req.body.firstName.should.not.be.empty.and.a('string')
-        req.body.lastName.should.not.be.empty.and.a('string')
-        req.body.emailAdress.should.not.be.empty.and.a('string').and.match(/@/)
-        next()
-    } catch (ex) {
-        next({
-            status: 400,
-            message: ex.message,
-            data: {}
-        })
-    }
-}
 
 const validateUserCreateChaiExpect = (req, res, next) => {
     try {
-        assert(req.body.firstName, 'Missing or incorrect firstName field')
-        chai.expect(req.body.firstName).to.not.be.empty
-        chai.expect(req.body.firstName).to.be.a('string')
-        chai.expect(req.body.firstName).to.match(
-            /^[a-zA-Z]+$/,
+        // Validate firstName
+        assert(req.body.firstName, 'Missing firstName')
+        assert(
+            typeof req.body.firstName === 'string',
             'firstName must be a string'
         )
-        assert(req.body.lastName, 'Missing or incorrect lastName field')
-        chai.expect(req.body.lastName).to.not.be.empty
-        chai.expect(req.body.lastName).to.be.a('string')
-        chai.expect(req.body.lastName).to.match(
-            /^[a-zA-Z]+$/,
+        assert(req.body.firstName.trim() !== '', 'firstName cannot be empty')
+        assert(
+            /^[a-zA-Z]+$/.test(req.body.firstName),
+            'firstName must contain only letters'
+        )
+
+        // Validate lastName
+        assert(req.body.lastName, 'Missing lastName')
+        assert(
+            typeof req.body.lastName === 'string',
             'lastName must be a string'
         )
-        assert(req.body.emailAdress, 'Missing or incorrect email')
-        chai.expect(req.body.emailAdress).to.not.be.empty
-        chai.expect(req.body.emailAdress).to.be.a('string')
-        chai.expect(req.body.emailAdress).to.match(/@/)
+        assert(req.body.lastName.trim() !== '', 'lastName cannot be empty')
+        assert(
+            /^[a-zA-Z]+$/.test(req.body.lastName),
+            'lastName must contain only letters'
+        )
 
+        // Validate emailAdress
+        assert(req.body.emailAdress, 'Missing emailAdress')
+        assert(
+            typeof req.body.emailAdress === 'string',
+            'emailAdress must be a string'
+        )
+        assert(
+            req.body.emailAdress.trim() !== '',
+            'emailAdress cannot be empty'
+        )
+        assert(/@/.test(req.body.emailAdress), 'incorrect email')
+
+        // Validate isActive
         assert(req.body.hasOwnProperty('isActive'), 'Missing isActive property')
         assert(
             typeof req.body.isActive === 'boolean',
             'isActive must be a boolean'
         )
+        // Validate password
+        assert(req.body.password, 'Missing password')
+        assert(
+            typeof req.body.password === 'string',
+            'password must be a string'
+        )
+        assert(req.body.password.trim() !== '', 'password cannot be empty')
+        assert(
+            req.body.password.length >= 8,
+            'password must be at least 8 characters long'
+        )
+
+        // Validate phoneNumber
+        assert(req.body.phoneNumber, 'Missing phone number')
+        assert(
+            typeof req.body.phoneNumber === 'string',
+            'phoneNumber must be a string'
+        )
+        assert(
+            req.body.phoneNumber.trim() !== '',
+            'phoneNumber cannot be empty'
+        )
+        assert(
+            /^[0-9]+$/.test(req.body.phoneNumber),
+            'phoneNumber must contain only digits'
+        )
+        // Validate street
+        assert(req.body.street, 'Missing street')
+        assert(typeof req.body.street === 'string', 'street must be a string')
+        assert(req.body.street.trim() !== '', 'street cannot be empty')
+
+        // Validate city
+        assert(req.body.city, 'Missing city')
+        assert(typeof req.body.city === 'string', 'city must be a string')
+        assert(req.body.city.trim() !== '', 'city cannot be empty')
 
         logger.trace('User successfully validated')
         next()
@@ -123,10 +111,41 @@ const validateUserCreateChaiExpect = (req, res, next) => {
     }
 }
 
+const checkUserExists = async (req, res, next) => {
+    try {
+        const emailAvailable = await userService.isEmailAvailable(
+            req.body.emailAdress,
+            (err, isAvailable) => {
+                if (err) {
+                    return next({
+                        status: 500,
+                        message: err.message,
+                        data: {}
+                    })
+                }
+                if (!isAvailable) {
+                    return res.status(403).json({
+                        status: 403,
+                        message: 'User with this email address already exists',
+                        data: {}
+                    })
+                }
+                next()
+            }
+        )
+    } catch (err) {
+        next({
+            status: 500,
+            message: err.message,
+            data: {}
+        })
+    }
+}
+
 // Userroutes
 router.post(
     '/api/user',
-
+    checkUserExists,
     validateUserCreateChaiExpect,
     userController.create
 )

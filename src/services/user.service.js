@@ -349,6 +349,27 @@ const userService = {
             )
         })
     },
+    isEmailAvailable: (email, callback) => {
+        logger.info(`isEmailAvailable: ${email}`)
+        db.getConnection((err, connection) => {
+            if (err) {
+                logger.error(err)
+                return callback(err, null)
+            }
+            connection.query(
+                'SELECT * FROM `user` WHERE emailAdress = ?',
+                [email],
+                (error, results) => {
+                    connection.release()
+                    if (error) {
+                        logger.error(error)
+                        return callback(error, null)
+                    }
+                    return callback(null, results.length === 0)
+                }
+            )
+        })
+    },
 
     getProfile: (userId, callback) => {
         logger.info('getProfile userId:', userId)
