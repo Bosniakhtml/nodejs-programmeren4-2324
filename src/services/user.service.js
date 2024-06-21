@@ -1,23 +1,72 @@
-// user.service.js
 const database = require('../dao/inmem-db')
 const logger = require('../util/logger')
 const db = require('../dao/mysql-db')
 
 const userService = {
-    getAll: (callback) => {
+    getAll: (req, callback) => {
         logger.info('getAll')
+        const {
+            id,
+            firstName,
+            lastName,
+            isActive,
+            emailAdress,
+            password,
+            phoneNumber,
+            roles,
+            street,
+            city
+        } = req.query
+        console.log(`Query params: ${JSON.stringify(req.query)}`)
 
-        // Deprecated: de 'oude' manier van werken, met de inmemory database
-        // database.getAll((err, data) => {
-        //     if (err) {
-        //         callback(err, null)
-        //     } else {
-        //         callback(null, {
-        //             message: `Found ${data.length} users.`,
-        //             data: data
-        //         })
-        //     }
-        // })
+        // List of valid fields
+        const validFields = [
+            'id',
+            'firstName',
+            'lastName',
+            'isActive',
+            'emailAdress',
+            'password',
+            'phoneNumber',
+            'roles',
+            'street',
+            'city'
+        ]
+
+        // Check for invalid fields
+        for (const param in req.query) {
+            if (!validFields.includes(param)) {
+                logger.warn(`Invalid field: ${param}`)
+                callback(null, {
+                    message: `No users found.`,
+                    data: []
+                })
+                return
+            }
+        }
+
+        let queryString =
+            'SELECT id, firstName, lastName, isActive, emailAdress, password, phoneNumber, roles, street, city FROM `user`'
+        const queryConditions = []
+
+        // Add conditions based on query parameters
+        if (id) queryConditions.push(`id = '${id}'`)
+        if (firstName) queryConditions.push(`firstName = '${firstName}'`)
+        if (lastName) queryConditions.push(`lastName = '${lastName}'`)
+        if (isActive) queryConditions.push(`isActive = '${isActive}'`)
+        if (emailAdress) queryConditions.push(`emailAdress = '${emailAdress}'`)
+        if (password) queryConditions.push(`password = '${password}'`)
+        if (phoneNumber) queryConditions.push(`phoneNumber = '${phoneNumber}'`)
+        if (roles) queryConditions.push(`roles = '${roles}'`)
+        if (street) queryConditions.push(`street = '${street}'`)
+        if (city) queryConditions.push(`city = '${city}'`)
+
+        // If there are any conditions, add them to the query string
+        if (queryConditions.length > 0) {
+            queryString += ' WHERE ' + queryConditions.join(' AND ')
+        }
+        queryString += ';'
+        console.log(queryString)
 
         // Nieuwe manier van werken: met de MySQL database
         db.getConnection(function (err, connection) {
@@ -27,148 +76,22 @@ const userService = {
                 return
             }
 
-            connection.query(
-                'SELECT id, firstName, lastName FROM `user`',
-                function (error, results, fields) {
-                    connection.release()
+            connection.query(queryString, function (error, results, fields) {
+                connection.release()
 
-                    if (error) {
-                        logger.error(error)
-                        callback(error, null)
-                    } else {
-                        logger.debug(results)
-                        callback(null, {
-                            message: `Found ${results.length} users.`,
-                            data: results
-                        })
-                    }
+                if (error) {
+                    logger.error(error)
+                    callback(error, null)
+                } else {
+                    logger.debug(results)
+                    callback(null, {
+                        message: `Found ${results.length} users.`,
+                        data: results
+                    })
                 }
-            )
-        })
-    },
-    /*
-    getById: (userId, callback) => {
-        logger.info('getById', userId)
-        database.getById(userId, (err, data) => {
-            if (err) {
-                logger.info(
-                    'error fetching user:',
-                    err.message || 'unknown error'
-                )
-                callback(err, null)
-            } else {
-                logger.trace(`User found with id ${data.id}.`)
-                callback(null, {
-                    message: `User found with id ${data.id}.`,
-                    data: data
-                })
-            }
-        })
-    } /*
-    getIsActive: (callback) => {
-        logger.info('getIsActive')
-        database.getAll((err, users) => {
-            if (err) {
-                logger.error(
-                    'Error getting users:',
-                    err.message || 'unknown error'
-                )
-                return callback(err, null)
-            }
-            const activeUsers = users.filter((user) => user.isActive)
-            callback(null, {
-                message: `Found ${activeUsers.length} active users.`,
-                data: activeUsers
             })
         })
     },
-
-    update: (userId, userData, callback) => {
-        logger.info('Updating user with id', userId)
-        database.getById(userId, (err, existingUser) => {
-            if (err) {
-                logger.error(
-                    'Error fetching user:',
-                    err.message || 'unknown error'
-                )
-                return callback(err, null)
-            }
-            if (!existingUser) {
-                return callback(
-                    { status: 404, message: 'User not found' },
-                    null
-                )
-            }
-            // Check if the logged-in user is the owner of the data
-            //  if (existingUser.id !== userData.id) {
-            //    return callback({ status: 403, message: 'Unauthorized' }, null)
-            // }
-            // Update user data
-            Object.assign(existingUser, userData)
-            database.update(existingUser, (err, updatedUser) => {
-                if (err) {
-                    logger.error(
-                        'Error updating user:',
-                        err.message || 'unknown error'
-                    )
-                    return callback(err, null)
-                }
-                logger.trace('User updated with id', updatedUser.id)
-                callback(null, {
-                    status: 200,
-                    message: `User with id ${updatedUser.id} updated successfully`,
-                    data: updatedUser
-                })
-            })
-        })
-    },
-
-    searchUsers: (field1, field2, callback) => {
-        // Roep de database aan om gebruikers op te halen op basis van de opgegeven criteria
-        database.searchUsers(field1, field2, (err, data) => {
-            if (err) {
-                callback(err, null)
-            } else {
-                callback(null, {
-                    message: `Found ${data.length} users matching the criteria.`,
-                    data: data
-                })
-            }
-        })
-    },
-
-    delete: (userId, callback) => {
-        logger.info('Deleting user with id', userId)
-        database.getById(userId, (err, existingUser) => {
-            if (err) {
-                logger.error(
-                    'Error fetching user:',
-                    err.message || 'unknown error'
-                )
-                return callback(err, null)
-            }
-            if (!existingUser) {
-                return callback(
-                    { status: 404, message: 'User not found' },
-                    null
-                )
-            }
-            database.delete(userId, (err) => {
-                if (err) {
-                    logger.error(
-                        'Error deleting user:',
-                        err.message || 'unknown error'
-                    )
-                    return callback(err, null)
-                }
-                logger.trace('User deleted with id', userId)
-                callback(null, {
-                    status: 200,
-                    message: `User with id ${userId} deleted successfully`
-                })
-            })
-        })
-    },*/
 
     //
     //
@@ -216,7 +139,7 @@ const userService = {
                 return callback(err, null)
             }
             connection.query(
-                'SELECT * FROM `user` WHERE id = ?',
+                'SELECT id, firstName, lastName, isActive, roles, emailAdress, phoneNumber, street, city FROM `user` WHERE id = ?',
                 [id],
                 (error, results) => {
                     connection.release()
@@ -284,8 +207,8 @@ const userService = {
         })
     },
 
-    update: (user, callback) => {
-        logger.info(`update: ${user.id}`)
+    update: (userId, userData, callback) => {
+        logger.info(`update: ${userId}`)
         db.getConnection((err, connection) => {
             if (err) {
                 logger.error(err)
@@ -293,14 +216,14 @@ const userService = {
             }
             connection.query(
                 'UPDATE `user` SET ? WHERE id = ?',
-                [user, user.id],
+                [userData, userId],
                 (error) => {
                     connection.release()
                     if (error) {
                         logger.error(error)
                         return callback(error, null)
                     }
-                    return callback(null, user)
+                    return callback(null, userData)
                 }
             )
         })
@@ -333,22 +256,42 @@ const userService = {
         db.getConnection((err, connection) => {
             if (err) {
                 logger.error(err)
-                return callback(err)
+                return callback({
+                    status: 500,
+                    message: 'Database connection error',
+                    data: {}
+                })
             }
             connection.query(
                 'DELETE FROM `user` WHERE id = ?',
                 [userId],
-                (error) => {
+                (error, results) => {
                     connection.release()
                     if (error) {
                         logger.error(error)
-                        return callback(error)
+                        return callback({
+                            status: 500,
+                            message: 'Error deleting user',
+                            data: {}
+                        })
                     }
-                    return callback(null)
+                    if (results.affectedRows === 0) {
+                        return callback({
+                            status: 404,
+                            message: 'User not found',
+                            data: {}
+                        })
+                    }
+                    return callback(null, {
+                        status: 200,
+                        message: 'User deleted successfully',
+                        data: {} // Maak 'data' leeg
+                    })
                 }
             )
         })
     },
+
     isEmailAvailable: (email, callback) => {
         logger.info(`isEmailAvailable: ${email}`)
         db.getConnection((err, connection) => {
@@ -382,7 +325,7 @@ const userService = {
             }
 
             connection.query(
-                'SELECT id, firstName, lastName FROM `user` WHERE id = ?',
+                'SELECT * FROM `user` WHERE id = ?',
                 [userId],
                 function (error, results, fields) {
                     connection.release()

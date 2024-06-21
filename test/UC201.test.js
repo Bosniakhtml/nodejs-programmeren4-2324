@@ -103,7 +103,7 @@ describe('UC201 Registreren als nieuwe user', () => {
             .send({
                 firstName: 'Voornaam',
                 lastName: 'Achternaam',
-                emailAdress: 'v.a@server.nl',
+                emailAdress: 'v.ab@server.nl',
                 isActive: false,
                 password: 'kort' // Niet-valide wachtwoord
             })
@@ -113,7 +113,9 @@ describe('UC201 Registreren als nieuwe user', () => {
                 chai.expect(res.body).to.have.property('status').equals(400)
                 chai.expect(res.body)
                     .to.have.property('message')
-                    .equals('password must be at least 8 characters long')
+                    .equals(
+                        'password must be at least 8 characters long, contain at least one uppercase letter, and contain at least one digit'
+                    )
                 chai
                     .expect(res.body)
                     .to.have.property('data')
@@ -168,7 +170,7 @@ describe('UC201 Registreren als nieuwe user', () => {
             .send({
                 firstName: 'Voornaam',
                 lastName: 'Achternaam',
-                emailAdress: 'v.a@server.nl',
+                emailAdress: 'v.ab@server.nl',
                 password: 'geldigWachtwoord123!', // Een geldig wachtwoord
                 isActive: true,
                 phoneNumber: '0612345678',

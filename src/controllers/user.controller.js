@@ -25,7 +25,7 @@ let userController = {
 
     getAll: (req, res, next) => {
         logger.trace('getAll')
-        userService.getAll((error, success) => {
+        userService.getAll(req, (error, success) => {
             if (error) {
                 return next({
                     status: error.status,
@@ -57,7 +57,7 @@ let userController = {
             if (success) {
                 res.status(200).json({
                     status: 200,
-                    message: success.message,
+                    message: 'User data retrieved successfully',
                     data: success
                 })
             }
@@ -82,12 +82,14 @@ let userController = {
             }
         })
     },
-
+    // user.controller.js
     update: (req, res, next) => {
         const userId = req.params.userId
         const userData = req.body
+
         logger.info('Updating user with id', userId)
-        userService.update(userId, userData, (error, success) => {
+
+        userService.getById(userId, (error, user) => {
             if (error) {
                 return next({
                     status: error.status,
@@ -95,13 +97,32 @@ let userController = {
                     data: {}
                 })
             }
-            if (success) {
-                res.status(200).json({
-                    status: 200,
-                    message: 'User updated successfully',
-                    data: success
+
+            if (!user) {
+                return res.status(404).json({
+                    status: 404,
+                    message: 'User not found',
+                    data: {}
                 })
             }
+
+            userService.update(userId, userData, (error, success) => {
+                if (error) {
+                    return next({
+                        status: error.status,
+                        message: error.message,
+                        data: {}
+                    })
+                }
+
+                if (success) {
+                    res.status(200).json({
+                        status: 200,
+                        message: 'User updated successfully',
+                        data: success
+                    })
+                }
+            })
         })
     },
 
@@ -110,6 +131,7 @@ let userController = {
         logger.info('Deleting user with id', userId)
         userService.delete(userId, (error, success) => {
             if (error) {
+                logger.error('Error deleting user:', error)
                 return next({
                     status: error.status,
                     message: error.message,
@@ -117,6 +139,7 @@ let userController = {
                 })
             }
             if (success) {
+                logger.info('User deleted successfully:', success)
                 res.status(200).json({
                     status: 200,
                     message: 'User deleted successfully',
@@ -160,7 +183,7 @@ let userController = {
             if (success) {
                 res.status(200).json({
                     status: 200,
-                    message: success.message,
+                    message: 'User profile retrieved successfully',
                     data: success.data
                 })
             }

@@ -1,3 +1,4 @@
+// auth.routes.js
 const assert = require('assert')
 const jwt = require('jsonwebtoken')
 const jwtSecretKey = require('../util/config').secretkey
@@ -6,7 +7,6 @@ const AuthController = require('../controllers/auth.controller')
 const logger = require('../util/logger')
 
 function validateLogin(req, res, next) {
-    // Verify that we receive the expected input
     try {
         if (!req.body.emailAdress) {
             throw new Error('Missing email address')
@@ -25,8 +25,8 @@ function validateLogin(req, res, next) {
         next()
     } catch (ex) {
         next({
-            status: 409,
-            message: ex.toString(),
+            status: 400,
+            message: ex.message,
             data: {}
         })
     }

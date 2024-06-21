@@ -9,6 +9,7 @@ const userController = require('../controllers/user.controller')
 const userService = require('../services/user.service')
 const logger = require('../util/logger')
 const authController = require('../services/auth.service')
+const validateToken = require('./auth.routes').validateToken
 
 // Tijdelijke functie om niet bestaande routes op te vangen
 const notFound = (req, res, next) => {
@@ -55,14 +56,13 @@ const validateUserCreateChaiExpect = (req, res, next) => {
             req.body.emailAdress.trim() !== '',
             'emailAdress cannot be empty'
         )
-        assert(/@/.test(req.body.emailAdress), 'incorrect email')
-
-        // Validate isActive
-        assert(req.body.hasOwnProperty('isActive'), 'Missing isActive property')
         assert(
-            typeof req.body.isActive === 'boolean',
-            'isActive must be a boolean'
+            /^[a-zA-Z]\.[a-zA-Z]{2,}@[a-zA-Z]{2,}\.[a-zA-Z]{2,3}$/.test(
+                req.body.emailAdress
+            ),
+            'incorrect email'
         )
+
         // Validate password
         assert(req.body.password, 'Missing password')
         assert(
@@ -71,8 +71,10 @@ const validateUserCreateChaiExpect = (req, res, next) => {
         )
         assert(req.body.password.trim() !== '', 'password cannot be empty')
         assert(
-            req.body.password.length >= 8,
-            'password must be at least 8 characters long'
+            /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d!@#$%^&*]{8,}$/.test(
+                req.body.password
+            ),
+            'password must be at least 8 characters long, contain at least one uppercase letter, and contain at least one digit'
         )
 
         // Validate phoneNumber
@@ -86,9 +88,10 @@ const validateUserCreateChaiExpect = (req, res, next) => {
             'phoneNumber cannot be empty'
         )
         assert(
-            /^[0-9]+$/.test(req.body.phoneNumber),
-            'phoneNumber must contain only digits'
+            /^06[-\s]?\d{8}$/.test(req.body.phoneNumber),
+            'phoneNumber must be in the format 06-12345678, 06 12345678 or 0612345678'
         )
+
         // Validate street
         assert(req.body.street, 'Missing street')
         assert(typeof req.body.street === 'string', 'street must be a string')
@@ -141,6 +144,45 @@ const checkUserExists = async (req, res, next) => {
         })
     }
 }
+const validateUpdateUser = (req, res, next) => {
+    const { userId } = req.params
+    const loggedInUserId = req.userId // Gebruik req.userId zoals ingesteld door validateToken
+
+    if (userId !== loggedInUserId.toString()) {
+        return res.status(403).json({
+            status: 403,
+            message: "You are not allowed to alter this user's data",
+            data: {}
+        })
+    }
+
+    next()
+}
+const validateUserExists = (req, res, next) => {
+    const { userId } = req.params
+
+    // Roep de userService aan om te controleren of de gebruiker bestaat
+    userService.getById(userId, (error, user) => {
+        if (error) {
+            return next({
+                status: error.status,
+                message: error.message,
+                data: {}
+            })
+        }
+
+        if (!user) {
+            return res.status(404).json({
+                status: 404,
+                message: 'User not found',
+                data: {}
+            })
+        }
+
+        // Als de gebruiker bestaat, ga dan door naar de volgende middleware/controller
+        next()
+    })
+}
 
 // Userroutes
 router.post(
@@ -149,26 +191,26 @@ router.post(
     validateUserCreateChaiExpect,
     userController.create
 )
-// router.get(
-//    '/api/user?field1=:value1&field2=:value2',
-//    userController.searchUsers
-// )
 
-router.get('/api/user', userController.getAll)
-router.get('/api/user/:userId', userController.getById)
-router.get('/api/isActive', userController.getByIsActive)
-
-// router.get('/api/user/isNotActive', userController.getByIsNotActive)
+router.get('/api/user', validateToken, userController.getAll)
+router.get('/api/user/profile', validateToken, userController.getProfile)
+router.get('/api/user/:userId', validateToken, userController.getById)
 
 // Tijdelijke routes om niet bestaande routes op te vangen
 router.put(
     '/api/user/:userId',
+    validateToken,
     validateUserCreateChaiExpect,
+    validateUserExists,
+    validateUpdateUser,
     userController.update
 )
-router.delete('/api/user/:userId', userController.deleteUser)
-
-router.put('/api/user/:userId', notFound)
-router.delete('/api/user/:userId', notFound)
+router.delete(
+    '/api/user/:userId',
+    validateToken,
+    validateUserExists,
+    validateUpdateUser,
+    userController.deleteUser
+)
 
 module.exports = router

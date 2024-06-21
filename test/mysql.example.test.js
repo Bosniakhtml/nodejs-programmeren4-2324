@@ -27,8 +27,8 @@ const CLEAR_DB = CLEAR_MEAL_TABLE + CLEAR_PARTICIPANTS_TABLE + CLEAR_USERS_TABLE
  * Deze id kun je als foreign key gebruiken in de andere queries, bv insert meal.
  */
 const INSERT_USER =
-    'INSERT INTO `user` (`id`, `firstName`, `lastName`, `emailAdress`, `password`, `street`, `city` ) VALUES' +
-    '(1, "first", "last", "name@server.nl", "secret", "street", "city");'
+    'INSERT INTO `user` (`id`, `firstName`, `lastName`, `emailAdress`, `password`, `street`, `city`, `isActive`, `phoneNumber` ) VALUES' +
+    '(1, "first", "last", "name@server.nl", "secret", "street", "city", true, "123-456-7890");'
 
 /**
  * Query om twee meals toe te voegen. Let op de cookId, die moet matchen
@@ -78,8 +78,10 @@ describe('Example MySql testcase', () => {
         })
 
         it('TC-xyz should return valid user', (done) => {
+            const token = jwt.sign({ userId: 1 }, jwtSecretKey)
             chai.request(server)
-                .get('/api/user')
+                .get('/api/user/1')
+                .set('Authorization', 'Bearer ' + token)
                 .end((err, res) => {
                     assert.ifError(err)
                     res.should.have.status(200)
@@ -101,8 +103,8 @@ describe('Example MySql testcase', () => {
                             'lastName',
                             'emailAdress',
                             'isActive',
-                            'password',
                             'phoneNumber',
+                            'roles',
                             'street',
                             'city'
                         )
@@ -140,6 +142,7 @@ describe('Example MySql testcase', () => {
                             'isActive',
                             'password',
                             'phoneNumber',
+                            'roles',
                             'street',
                             'city'
                         )
