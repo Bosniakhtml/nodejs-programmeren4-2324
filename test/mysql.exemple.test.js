@@ -1,150 +1,99 @@
-process.env.DB_DATABASE = process.env.DB_DATABASE || 'share-a-meal-testdb'
-process.env.LOGLEVEL = 'trace'
-
 const chai = require('chai')
 const chaiHttp = require('chai-http')
-const assert = require('assert')
+const server = require('../index')
+const tracer = require('tracer')
+const mysql = require('mysql2')
 const jwt = require('jsonwebtoken')
 const jwtSecretKey = require('../src/util/config').secretkey
-const db = require('../src/dao/mysql-db')
-const server = require('../index')
 const logger = require('../src/util/logger')
 require('dotenv').config()
 
 chai.should()
 chai.use(chaiHttp)
+tracer.setLevel('warn')
 
-/**
- * Db queries to clear and fill the test database before each test.
- */
-const CLEAR_MEAL_TABLE = 'DELETE IGNORE FROM `meal`;'
-const CLEAR_PARTICIPANTS_TABLE = 'DELETE IGNORE FROM `meal_participants_user`;'
-const CLEAR_USERS_TABLE = 'DELETE IGNORE FROM `user`;'
-const CLEAR_DB = CLEAR_MEAL_TABLE + CLEAR_PARTICIPANTS_TABLE + CLEAR_USERS_TABLE
+// const connection = mysql.createConnection({
+//     host: process.env.DB_HOST,
+//     user: process.env.DB_USER,
+//     password: process.env.DB_PASS,
+//     database: 'share-a-meal-testdb'
+// })
 
-/**
- * Voeg een user toe aan de database. Deze user heeft id 1.
- * Deze id kun je als foreign key gebruiken in de andere queries, bv insert meal.
- */
-const INSERT_USER =
-    'INSERT INTO `user` (`id`, `firstName`, `lastName`, `emailAdress`, `password`, `street`, `city`, `isActive`, `phoneNumber` ) VALUES' +
-    '(1, "first", "last", "name@server.nl", "secret", "street", "city", true, "123-456-7890");'
+const endpointToTest = '/api/user'
 
-/**
- * Query om twee meals toe te voegen. Let op de cookId, die moet matchen
- * met een bestaande user in de database.
- */
-const INSERT_MEALS =
-    'INSERT INTO `meal` (`id`, `name`, `description`, `imageUrl`, `dateTime`, `maxAmountOfParticipants`, `price`, `cookId`) VALUES' +
-    "(1, 'Meal A', 'description', 'image url', NOW(), 5, 6.50, 1)," +
-    "(2, 'Meal B', 'description', 'image url', NOW(), 5, 6.50, 1);"
-
-describe('Example MySql testcase', () => {
-    //
-    // informatie over before, after, beforeEach, afterEach:
-    // https://mochajs.org/#hooks
-    //
+describe('UC201 Registreren als nieuwe user', () => {
     before((done) => {
-        logger.debug(
-            'before: hier zorg je eventueel dat de precondities correct zijn'
-        )
-        logger.debug('before done')
+        // connection.connect((err) => {
+        //     if (err) {
+        //         console.error('error connecting: ' + err.stack)
+        //         return done(err)
+        //     }
+        //     console.log('connected as id ' + connection.threadId)
+        done()
+        // })
+    })
+
+    after((done) => {
+        // connection.end((err) => {
+        //     if (err) {
+        //         console.error('error ending the connection: ' + err.stack)
+        //         return done(err)
+        //     }
+        //     console.log('connection ended')
+        done()
+        // })
+    })
+
+    beforeEach((done) => {
+        console.log('Before each test')
         done()
     })
 
-    describe('UC201 Reading a user should succeed', () => {
-        //
-        beforeEach((done) => {
-            logger.debug('beforeEach called')
-            // maak de testdatabase leeg zodat we onze testen kunnen uitvoeren.
-            db.getConnection(function (err, connection) {
-                if (err) throw err // not connected!
-
-                // Use the connection
-                connection.query(
-                    CLEAR_DB + INSERT_USER,
-                    function (error, results, fields) {
-                        // When done with the connection, release it.
-                        connection.release()
-
-                        // Handle error after the release.
-                        if (error) throw error
-                        // Let op dat je done() pas aanroept als de query callback eindigt!
-                        logger.debug('beforeEach done')
-                        done()
-                    }
-                )
+    it('TC-201-1 Verplicht veld ontbreekt', (done) => {
+        chai.request(server)
+            .post(endpointToTest)
+            .send({
+                // firstName: 'Voornaam', ontbreekt
+                lastName: 'Achternaam',
+                emailAdress: 'v.a@server.nl'
             })
-        })
+            .end((err, res) => {
+                chai.expect(res).to.have.status(400)
+                chai.expect(res.body).to.be.a('object')
+                chai.expect(res.body).to.have.property('status').equals(400)
+                chai.expect(res.body)
+                    .to.have.property('message')
+                    .equals('Missing firstName')
+                chai
+                    .expect(res.body)
+                    .to.have.property('data')
+                    .that.is.a('object').that.is.empty
 
-        it('TC-xyz should return valid user', (done) => {
-            const token = jwt.sign({ userId: 1 }, jwtSecretKey)
-            chai.request(server)
-                .get('/api/user/1')
-                .set('Authorization', 'Bearer ' + token)
-                .end((err, res) => {
-                    assert.ifError(err)
-                    res.should.have.status(200)
-                    res.should.be.an('object')
+                done()
+            })
+    })
 
-                    res.body.should.be
-                        .an('object')
-                        .that.has.all.keys('status', 'message', 'data')
-                    res.body.status.should.be.a('number')
+    it('TC-201-2 Niet-valide email adres', (done) => {
+        chai.request(server)
+            .post(endpointToTest)
+            .send({
+                firstName: 'Voornaam',
+                lastName: 'Achternaam',
+                emailAdress: 'ongeldig-email-adres' // Ongeldig e-mailadres
+            })
+            .end((err, res) => {
+                chai.expect(res).to.have.status(400)
+                chai.expect(res.body).to.be.a('object')
+                chai.expect(res.body).to.have.property('status').equals(400)
+                chai.expect(res.body)
+                    .to.have.property('message')
+                    .equals('incorrect email')
+                chai
+                    .expect(res.body)
+                    .to.have.property('data')
+                    .that.is.a('object').that.is.empty
 
-                    const data = res.body.data
-
-                    // Assuming data is an object with 'user' and 'meals'
-                    data.should.be.an('object')
-                    data.should.have.all.keys('user', 'meals')
-
-                    const user = data.user
-                    user.should.have.all.keys(
-                        'id',
-                        'firstName',
-                        'lastName',
-                        'emailAdress',
-                        'isActive',
-                        'phoneNumber',
-                        'roles',
-                        'street',
-                        'city'
-                    )
-                    user.id.should.be.a('number').that.equals(1)
-
-                    const meals = data.meals
-                    meals.should.be.an('array')
-
-                    done()
-                })
-        })
-
-        it('TC-xyz should return valid user profile', (done) => {
-            const token = jwt.sign({ userId: 1 }, jwtSecretKey)
-            chai.request(server)
-                .get('/api/user/profile')
-                .set('Authorization', 'Bearer ' + token)
-                .end((err, res) => {
-                    assert.ifError(err)
-                    res.should.have.status(200)
-                    res.should.be.an('object')
-
-                    res.body.should.be
-                        .an('object')
-                        .that.has.all.keys('status', 'message', 'data')
-                    res.body.status.should.be.a('number')
-
-                    const data = res.body.data
-
-                    // Assuming data is an object with 'user' and 'meals'
-                    data.should.be.an('object')
-                    data.should.have.all.keys('user', 'meals')
-
-                    const meals = data.meals
-                    meals.should.be.an('array')
-
-                    done()
-                })
-        })
+                done()
+            })
     })
 })
