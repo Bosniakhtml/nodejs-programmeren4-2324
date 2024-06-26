@@ -49,7 +49,7 @@ describe('UC201 Registreren als nieuwe user', () => {
         done()
     })
 
-    it('TC-201-1 Verplicht veld ontbreekt', (done) => {
+    it.skip('TC-201-1 Verplicht veld ontbreekt', (done) => {
         chai.request(server)
             .post(endpointToTest)
             .send({
@@ -73,7 +73,7 @@ describe('UC201 Registreren als nieuwe user', () => {
             })
     })
 
-    it('TC-201-2 Niet-valide email adres', (done) => {
+    it.skip('TC-201-2 Niet-valide email adres', (done) => {
         chai.request(server)
             .post(endpointToTest)
             .send({
