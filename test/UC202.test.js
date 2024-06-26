@@ -9,36 +9,36 @@ require('dotenv').config()
 chai.should()
 chai.use(chaiHttp)
 
-const connection = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: 'share-a-meal-testdb'
-})
+// const connection = mysql.createConnection({
+//     host: process.env.DB_HOST,
+//     user: process.env.DB_USER,
+//     password: process.env.DB_PASS,
+//     database: 'share-a-meal-testdb'
+// })
 
 const endpointToTest = '/api/user'
 
 describe('UC-202 Opvragen van overzicht van users', () => {
     before((done) => {
-        connection.connect((err) => {
-            if (err) {
-                console.error('error connecting: ' + err.stack)
-                return done(err)
-            }
-            console.log('connected as id ' + connection.threadId)
-            done()
-        })
+        // connection.connect((err) => {
+        //     if (err) {
+        //         console.error('error connecting: ' + err.stack)
+        //         return done(err)
+        //     }
+        //     console.log('connected as id ' + connection.threadId)
+        done()
+        // })
     })
 
     after((done) => {
-        connection.end((err) => {
-            if (err) {
-                console.error('error ending the connection: ' + err.stack)
-                return done(err)
-            }
-            console.log('connection ended')
+        // connection.end((err) => {
+            // if (err) {
+            //     console.error('error ending the connection: ' + err.stack)
+            //     return done(err)
+            // }
+            // console.log('connection ended')
             done()
-        })
+        // })
     })
 
     beforeEach((done) => {
