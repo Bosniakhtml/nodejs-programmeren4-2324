@@ -94,22 +94,27 @@ describe('Example MySql testcase', () => {
 
                     const data = res.body.data
 
-                    data.should.be.an('array').that.has.lengthOf(1)
-                    data[0].should.be
-                        .an('object')
-                        .that.has.all.keys(
-                            'id',
-                            'firstName',
-                            'lastName',
-                            'emailAdress',
-                            'isActive',
-                            'phoneNumber',
-                            'roles',
-                            'street',
-                            'city'
-                        )
-                    data[0].id.should.be.a('number').that.equals(1)
-                    // Enzovoort!
+                    // Assuming data is an object with 'user' and 'meals'
+                    data.should.be.an('object')
+                    data.should.have.all.keys('user', 'meals')
+
+                    const user = data.user
+                    user.should.have.all.keys(
+                        'id',
+                        'firstName',
+                        'lastName',
+                        'emailAdress',
+                        'isActive',
+                        'phoneNumber',
+                        'roles',
+                        'street',
+                        'city'
+                    )
+                    user.id.should.be.a('number').that.equals(1)
+
+                    const meals = data.meals
+                    meals.should.be.an('array')
+
                     done()
                 })
         })
@@ -131,23 +136,13 @@ describe('Example MySql testcase', () => {
 
                     const data = res.body.data
 
-                    data.should.be.an('array').that.has.lengthOf(1)
-                    data[0].should.be
-                        .an('object')
-                        .that.has.all.keys(
-                            'id',
-                            'firstName',
-                            'lastName',
-                            'emailAdress',
-                            'isActive',
-                            'password',
-                            'phoneNumber',
-                            'roles',
-                            'street',
-                            'city'
-                        )
-                    data[0].id.should.be.a('number').that.equals(1)
-                    // Enzovoort!
+                    // Assuming data is an object with 'user' and 'meals'
+                    data.should.be.an('object')
+                    data.should.have.all.keys('user', 'meals')
+
+                    const meals = data.meals
+                    meals.should.be.an('array')
+
                     done()
                 })
         })

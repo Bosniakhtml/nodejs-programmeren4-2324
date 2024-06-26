@@ -1,4 +1,3 @@
-const database = require('../dao/inmem-db')
 const logger = require('../util/logger')
 const db = require('../dao/mysql-db')
 
@@ -282,11 +281,7 @@ const userService = {
                             data: {}
                         })
                     }
-                    return callback(null, {
-                        status: 200,
-                        message: 'User deleted successfully',
-                        data: {} // Maak 'data' leeg
-                    })
+                    return callback(null, {}) // Return only necessary data
                 }
             )
         })

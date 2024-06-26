@@ -1,5 +1,6 @@
 const userService = require('../services/user.service')
 const logger = require('../util/logger')
+const mealService = require('../services/meal.service')
 
 let userController = {
     create: (req, res, next) => {
@@ -46,7 +47,7 @@ let userController = {
     getById: (req, res, next) => {
         const userId = req.params.userId
         logger.trace('userController: getById', userId)
-        userService.getById(userId, (error, success) => {
+        userService.getById(userId, (error, user) => {
             if (error) {
                 return next({
                     status: error.status,
@@ -54,11 +55,23 @@ let userController = {
                     data: {}
                 })
             }
-            if (success) {
-                res.status(200).json({
-                    status: 200,
-                    message: 'User data retrieved successfully',
-                    data: success
+            if (user) {
+                mealService.getMealsByCookId(userId, (mealError, meals) => {
+                    if (mealError) {
+                        return next({
+                            status: mealError.status,
+                            message: mealError.message,
+                            data: {}
+                        })
+                    }
+                    res.status(200).json({
+                        status: 200,
+                        message: 'User data retrieved successfully',
+                        data: {
+                            user,
+                            meals
+                        }
+                    })
                 })
             }
         })
@@ -172,7 +185,7 @@ let userController = {
     getProfile: (req, res, next) => {
         const userId = req.userId
         logger.trace('getProfile for userId', userId)
-        userService.getProfile(userId, (error, success) => {
+        userService.getProfile(userId, (error, user) => {
             if (error) {
                 return next({
                     status: error.status,
@@ -180,11 +193,23 @@ let userController = {
                     data: {}
                 })
             }
-            if (success) {
-                res.status(200).json({
-                    status: 200,
-                    message: 'User profile retrieved successfully',
-                    data: success.data
+            if (user) {
+                mealService.getMealsByCookId(userId, (mealError, meals) => {
+                    if (mealError) {
+                        return next({
+                            status: mealError.status,
+                            message: mealError.message,
+                            data: {}
+                        })
+                    }
+                    res.status(200).json({
+                        status: 200,
+                        message: 'User profile retrieved successfully',
+                        data: {
+                            user,
+                            meals
+                        }
+                    })
                 })
             }
         })

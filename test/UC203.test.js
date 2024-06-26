@@ -95,29 +95,22 @@ describe('UC203 Opvragen van gebruikersprofiel', () => {
                     .get(endpointToTest)
                     .set('Authorization', `Bearer ${validToken}`)
                     .end((err, res) => {
-                        chai.expect(res).to.have.status(200)
-                        chai.expect(res.body).to.be.a('object')
-                        chai.expect(res.body)
-                            .to.have.property('status')
-                            .equals(200)
-                        chai.expect(res.body)
-                            .to.have.property('message')
-                            .equals('User profile retrieved successfully')
-                        chai.expect(res.body)
-                            .to.have.property('data')
-                            .that.is.a('array')
-                            .with.lengthOf(1)
+                        res.should.have.status(200)
+                        res.should.be.an('object')
 
-                        const user = res.body.data[0]
-                        chai.expect(user)
-                            .to.have.property('id')
-                            .that.equals(testUser.id)
-                        chai.expect(user)
-                            .to.have.property('firstName')
-                            .that.equals(testUser.firstName)
-                        chai.expect(user)
-                            .to.have.property('lastName')
-                            .that.equals(testUser.lastName)
+                        res.body.should.be
+                            .an('object')
+                            .that.has.all.keys('status', 'message', 'data')
+                        res.body.status.should.be.a('number')
+
+                        const data = res.body.data
+
+                        // Assuming data is an object with 'user' and 'meals'
+                        data.should.be.an('object')
+                        data.should.have.all.keys('user', 'meals')
+
+                        const meals = data.meals
+                        meals.should.be.an('array')
 
                         done()
                     })

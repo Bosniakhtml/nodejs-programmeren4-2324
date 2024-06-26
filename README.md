@@ -1,10 +1,24 @@
-# Nodejs Programmeren 4 Express server
+# Nodejs Programmeren 4 Express Server
 
-Hier komt een korte introductie.
+## Introduction
+
+This is a simple Node.js Express server developed for the Nodejs Programmeren 4 course. The server provides various routes for user authentication, meal management, user management and general information about the server itself.
+
+## Features
+
+-   User Authentication
+-   User Management
+-   Meal Management
+-   Server Information
+
+## Prerequisites
+
+-   [Node.js](https://nodejs.org/) (version 14.x or later)
+-   [npm](https://www.npmjs.com/)
 
 ## Installing
 
-To install, run `npm install`.
+To install the necessary dependencies, run `npm install`.
 
 ## Running
 
